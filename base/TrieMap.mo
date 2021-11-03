@@ -1,10 +1,12 @@
-/// Functional map
+/// Key-value hash maps.
 ///
-/// This module defines an imperative hash map, with a general key and value type.  It matches the interface and semantics of HashMap.  Unlike HashMap, its internal representation uses a functional hash trie (see library `Trie`).
+/// An imperative hash map, with a general key and value type.
 ///
-/// This class permits us to compare the performance of two representations of hash-based maps, where tries (as binary trees) permit more efficient, constant-time, cloning compared with ordinary tables.  This property is nice for supporting transactional workflows where map mutations may be provisional, and where we may expect some mutations to be uncommitted, or to "roll back".
+/// - The `class` `TrieMap` exposes the same interface as `HashMap`.
 ///
-/// For now, this class does not permit a direct `clone` operation (neither does `HashMap`), but it does permit creating iterators via `iter()`.  The effect is similar: Each iterator costs `O(1)` to create, but represents a fixed view of the mapping that does not interfere with mutations (it will _not_ view subsequent insertions or mutations, if any).
+/// - Unlike HashMap, the internal representation uses a functional representation (via `Trie` module).
+///
+/// - This class does not permit a direct `clone` operation (neither does `HashMap`), but it does permit creating iterators via `iter()`.  Each iterator costs `O(1)` to create, but represents a fixed view of the mapping that does not interfere with mutations (it will _not_ reflect subsequent insertions or mutations, if any).
 
 import T "Trie";
 import P "Prelude";
@@ -61,11 +63,23 @@ module {
       let (t, ov) = T.remove<K, V>(map, keyObj, isEq);
       map := t;
       switch (ov) {
-        case null { _size -= 1 };
-        case _ {}
+        case null {};
+        case (?_) { _size -= 1 }
       };
       ov
     };
+
+    /// An `Iter` over the keys.
+    ///
+    /// Each iterator gets a _persistent view_ of the mapping, independent of concurrent updates to the iterated map.
+    public func keys() : I.Iter<K>
+    { I.map(entries(), func (kv : (K, V)) : K { kv.0 }) };
+
+    /// An `Iter` over the values.
+    ///
+    /// Each iterator gets a _persistent view_ of the mapping, independent of concurrent updates to the iterated map.
+    public func vals() : I.Iter<V>
+    { I.map(entries(), func (kv : (K, V)) : V { kv.1 }) };
 
     /// Returns an `Iter` over the entries.
     ///
